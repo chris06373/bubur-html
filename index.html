@@ -353,15 +353,27 @@
         document.getElementById('orderTableBody').innerHTML = html || '<tr><td colspan="6" class="text-center">Belum ada order.</td></tr>';
     }
 
-    function ubahStatus(id, status) {
-        let orders = JSON.parse(localStorage.getItem('db_orders'));
-        let order = orders.find(o => o.id === id);
-        if(order) {
-            order.status = status;
-            localStorage.setItem('db_orders', JSON.stringify(orders));
-            loadOrders();
+function ubahStatus(id, status) {
+    let orders = JSON.parse(localStorage.getItem('db_orders')) || [];
+    let order = orders.find(o => o.id === id);
+    if(order) {
+        order.status = status;
+        localStorage.setItem('db_orders', JSON.stringify(orders));
+        
+        // Jika status selesai, masukkan ke histori
+        if(status === 'Selesai') {
+            let histori = JSON.parse(localStorage.getItem('db_histori')) || [];
+            // Cek agar tidak duplikat
+            let existInHistori = histori.some(h => h.id === order.id);
+            if(!existInHistori) {
+                histori.push(order);
+                localStorage.setItem('db_histori', JSON.stringify(histori));
+            }
         }
+        
+        loadOrders();
     }
+}
 
     function loadPembukuan() {
         let orders = JSON.parse(localStorage.getItem('db_orders'));
