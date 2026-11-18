@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { background-color: #f8f9fa; }
-        .sidebar { min-height: 100vh; background: #343a40; color: white; }
+        .sidebar { background: #343a40; color: white; min-height: 100vh; }
         .sidebar a { color: #adb5bd; text-decoration: none; display: block; padding: 10px 15px; border-radius: 5px; margin-bottom: 5px; }
         .sidebar a:hover, .sidebar a.active { background: #0d6efd; color: white; }
         .print-area { display: none; }
@@ -19,43 +19,72 @@
             .print-area, .print-area * { visibility: visible; }
             .print-area { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
         }
+        @media (max-width: 768px) {
+            .sidebar { min-height: auto; }
+        }
     </style>
 </head>
 <body>
 
+<!-- Navbar Khusus Mobile (Offcanvas Toggle) -->
+<nav class="navbar navbar-dark bg-dark d-md-none px-3">
+    <a class="navbar-brand" href="#"><i class="fas fa-bowl-rice text-warning"></i> Bubur Express</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</nav>
+
+<!-- Sidebar Mobile (Offcanvas) -->
+<div class="offcanvas offcanvas-start bg-dark text-white d-md-none" tabindex="-1" id="mobileSidebar">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title text-warning"><i class="fas fa-bowl-rice"></i> Bubur Express</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <a href="#" onclick="showSection('kasir'); closeOffcanvas();" class="active"><i class="fas fa-cash-register me-2"></i> Kasir & Menu Bubur</a>
+        <a href="#" onclick="showSection('status'); closeOffcanvas();"><i class="fas fa-list-check me-2"></i> Status Order</a>
+        <a href="#" onclick="showSection('buku'); closeOffcanvas();"><i class="fas fa-book me-2"></i> Pembukuan Sederhana</a>
+        <a href="database.html"><i class="fas fa-database me-2"></i> Database Lokal</a>
+        <a href="stok.html"><i class="fas fa-boxes me-2"></i> Manajemen Stok</a>
+        <a href="laporan.html"><i class="fas fa-chart-line me-2"></i> Laporan Keuangan</a>
+        <hr class="text-secondary">
+        <div id="statusKasirBadgeMobile" class="p-2 bg-danger rounded text-center small">Kasir Tutup</div>
+    </div>
+</div>
+
 <div class="container-fluid">
     <div class="row">
-        <!-- Sidebar Menu -->
-        <div class="col-md-3 col-lg-2 sidebar p-3">
+        <!-- Sidebar Desktop -->
+        <div class="col-md-3 col-lg-2 sidebar p-3 d-none d-md-block">
             <h4 class="text-center text-warning mb-4"><i class="fas fa-bowl-rice"></i> Bubur Express</h4>
             <a href="#" onclick="showSection('kasir')" class="active"><i class="fas fa-cash-register me-2"></i> Kasir & Menu Bubur</a>
             <a href="#" onclick="showSection('status')"><i class="fas fa-list-check me-2"></i> Status Order</a>
             <a href="#" onclick="showSection('buku')"><i class="fas fa-book me-2"></i> Pembukuan Sederhana</a>
             <a href="database.html" target="_blank"><i class="fas fa-database me-2"></i> Database Lokal</a>
+            <a href="stok.html" target="_blank"><i class="fas fa-boxes me-2"></i> Manajemen Stok</a>
+            <a href="laporan.html" target="_blank"><i class="fas fa-chart-line me-2"></i> Laporan Keuangan</a>
             <hr class="text-secondary">
             <div id="statusKasirBadge" class="p-2 bg-danger rounded text-center small">Kasir Tutup</div>
         </div>
 
         <!-- Main Content -->
-        <div class="col-md-9 col-lg-10 p-4">
+        <div class="col-md-9 col-lg-10 p-3 p-md-4">
             
             <!-- SECTION 1: KASIR & MENU BUBUR -->
             <div id="section-kasir" class="content-section">
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
                     <h2>Kasir & Layanan Bubur</h2>
                     <div>
-                        <button class="btn btn-success btn-sm" onclick="bukaKasir()"><i class="fas fa-lock-open"></i> Buka Kasir</button>
-                        <button class="btn btn-danger btn-sm" onclick="tutupKasir()"><i class="fas fa-lock"></i> Tutup Kasir</button>
+                        <button class="btn btn-success btn-sm" onclick="bukaKasir()"><i class="fas fa-lock-open"></i> Buka</button>
+                        <button class="btn btn-danger btn-sm" onclick="tutupKasir()"><i class="fas fa-lock"></i> Tutup</button>
                     </div>
                 </div>
 
                 <div class="row">
                     <!-- Daftar Menu Bubur -->
-                    <div class="col-md-7">
+                    <div class="col-md-7 mb-4">
                         <h5>Pilih Menu Bubur</h5>
-                        <div class="row" id="menuList">
-                            <!-- Menu items injected via JS -->
-                        </div>
+                        <div class="row" id="menuList"></div>
                     </div>
 
                     <!-- Keranjang / Order -->
@@ -92,7 +121,7 @@
                             <table class="table table-striped">
                                <thead>
                                    <tr>
-                                       <th>ID Order</th>
+                                       <th>ID</th>
                                        <th>Pelanggan</th>
                                        <th>Pesanan</th>
                                        <th>Total</th>
@@ -100,9 +129,7 @@
                                        <th>Aksi</th>
                                    </tr>
                                </thead>
-                               <tbody id="orderTableBody">
-                                   <!-- Data loaded via JS -->
-                               </tbody>
+                               <tbody id="orderTableBody"></tbody>
                             </table>
                         </div>
                     </div>
@@ -114,7 +141,7 @@
                 <h2>Pembukuan Sederhana</h2>
                 <p class="text-muted">Rekapitulasi keuangan harian dari transaksi penjualan.</p>
                 <div class="row">
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-6 mb-3">
                         <div class="card bg-primary text-white">
                             <div class="card-body">
                                 <h6>Total Pemasukan</h6>
@@ -122,7 +149,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-6 mb-3">
                         <div class="card bg-success text-white">
                             <div class="card-body">
                                 <h6>Total Transaksi</h6>
@@ -134,17 +161,19 @@
                 <div class="card shadow-sm mt-3">
                     <div class="card-body">
                         <h5>Riwayat Transaksi</h5>
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Waktu</th>
-                                    <th>Pelanggan</th>
-                                    <th>Detail</th>
-                                    <th>Jumlah</th>
-                                </tr>
-                            </thead>
-                            <tbody id="bukuRiwayat"></tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Waktu</th>
+                                        <th>Pelanggan</th>
+                                        <th>Detail</th>
+                                        <th>Jumlah</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bukuRiwayat"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -153,7 +182,7 @@
     </div>
 </div>
 
-<!-- Area Cetak Struk (Hidden Standard, Visible on Print) -->
+<!-- Area Cetak Struk -->
 <div id="printArea" class="print-area p-3">
     <div style="text-align: center;">
         <h3>BUBUR AYAM EXPRESS</h3>
@@ -167,17 +196,15 @@
 
 <!-- JavaScript Logic -->
 <script>
-    // Data Menu Bubur
     const menuBubur = [
-        { id: 1, nama: "Bubur Ayam Spesial", harga: 15000, img: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=100" },
-        { id: 2, nama: "Bubur Ayam Telur Asin", harga: 18000, img: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=100" },
-        { id: 3, nama: "Bubur Ayam Cakue Jumbo", harga: 13000, img: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=100" },
-        { id: 4, nama: "Bubur Polos Kuah Kaldu", harga: 9000, img: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=100" }
+        { id: 1, nama: "Bubur Ayam Spesial", harga: 15000 },
+        { id: 2, nama: "Bubur Ayam Telur Asin", harga: 18000 },
+        { id: 3, nama: "Bubur Ayam Cakue Jumbo", harga: 13000 },
+        { id: 4, nama: "Bubur Polos Kuah Kaldu", harga: 9000 }
     ];
 
     let cart = [];
 
-    // Inisialisasi LocalStorage jika kosong
     if (!localStorage.getItem('db_orders')) localStorage.setItem('db_orders', JSON.stringify([]));
     if (!localStorage.getItem('db_kasir')) localStorage.setItem('db_kasir', 'TUTUP');
 
@@ -185,7 +212,7 @@
         let html = '';
         menuBubur.forEach(item => {
             html += `
-                <div class="col-md-6 mb-3">
+                <div class="col-sm-6 mb-3">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body d-flex justify-content-between align-items-center">
                             <div>
@@ -211,11 +238,7 @@
         }
         let item = menuBubur.find(m => m.id === id);
         let exist = cart.find(c => c.id === id);
-        if (exist) {
-            exist.qty++;
-        } else {
-            cart.push({ ...item, qty: 1 });
-        }
+        if (exist) { exist.qty++; } else { cart.push({ ...item, qty: 1 }); }
         renderCart();
     }
 
@@ -264,13 +287,12 @@
     function updateStatusKasirBadge() {
         let status = localStorage.getItem('db_kasir');
         let badge = document.getElementById('statusKasirBadge');
-        if (status === 'BUKA') {
-            badge.className = 'p-2 bg-success rounded text-center small text-white';
-            badge.innerText = 'Kasir BUKA';
-        } else {
-            badge.className = 'p-2 bg-danger rounded text-center small text-white';
-            badge.innerText = 'Kasir TUTUP';
-        }
+        let badgeMob = document.getElementById('statusKasirBadgeMobile');
+        let text = status === 'BUKA' ? 'Kasir BUKA' : 'Kasir TUTUP';
+        let cls = status === 'BUKA' ? 'p-2 bg-success rounded text-center small text-white' : 'p-2 bg-danger rounded text-center small text-white';
+        
+        badge.className = cls; badge.innerText = text;
+        badgeMob.className = cls; badgeMob.innerText = text;
     }
 
     function prosesOrder() {
@@ -311,8 +333,8 @@
                     <td>Rp ${o.total.toLocaleString()}</td>
                     <td><span class="badge bg-info">${o.status}</span></td>
                     <td>
-                        <button class="btn btn-sm btn-success" onclick="ubahStatus('${o.id}', 'Selesai')">Selesai</button>
-                        <button class="btn btn-sm btn-secondary" onclick="printStruk('${o.id}')"><i class="fas fa-print"></i></button>
+                        <button class="btn btn-sm btn-success mb-1" onclick="ubahStatus('${o.id}', 'Selesai')">Selesai</button>
+                        <button class="btn btn-sm btn-secondary mb-1" onclick="printStruk('${o.id}')"><i class="fas fa-print"></i></button>
                     </td>
                 </tr>
             `;
@@ -339,7 +361,7 @@
             let detailStr = o.items.map(i => `${i.qty}x ${i.nama}`).join(', ');
             html += `
                 <tr>
-                    <td>Just Now</td>
+                    <td>Baru Saja</td>
                     <td>${o.nama}</td>
                     <td><small>${detailStr}</small></td>
                     <td>Rp ${o.total.toLocaleString()}</td>
@@ -370,12 +392,15 @@
         document.querySelectorAll('.content-section').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.sidebar a').forEach(el => el.classList.remove('active'));
         document.getElementById('section-' + sec).style.display = 'block';
-        event.currentTarget.classList.add('active');
         if(sec === 'status') loadOrders();
         if(sec === 'buku') loadPembukuan();
     }
 
-    // Jalankan saat load
+    function closeOffcanvas() {
+        let bsOffcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar'));
+        if(bsOffcanvas) bsOffcanvas.hide();
+    }
+
     window.onload = function() {
         renderMenu();
         updateStatusKasirBadge();
@@ -383,7 +408,6 @@
         loadPembukuan();
     };
 </script>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
