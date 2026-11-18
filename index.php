@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Bubur Pintar - Menu Utama</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .sidebar { min-height: 100vh; background: #343a40; color: white; }
+        .sidebar a { color: #adb5bd; text-decoration: none; display: block; padding: 10px 15px; border-radius: 5px; margin-bottom: 5px; }
+        .sidebar a:hover, .sidebar a.active { background: #0d6efd; color: white; }
+        .print-area { display: none; }
+        @media print {
+            body * { visibility: hidden; }
+            .print-area, .print-area * { visibility: visible; }
+            .print-area { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar Menu -->
+        <div class="col-md-3 col-lg-2 sidebar p-3">
+            <h4 class="text-center text-warning mb-4"><i class="fas fa-bowl-rice"></i> Bubur Express</h4>
+            <a href="#" onclick="showSection('kasir')" class="active"><i class="fas fa-cash-register me-2"></i> Kasir & Menu Bubur</a>
+            <a href="#" onclick="showSection('status')"><i class="fas fa-list-check me-2"></i> Status Order</a>
+            <a href="#" onclick="showSection('buku')"><i class="fas fa-book me-2"></i> Pembukuan Sederhana</a>
+            <a href="database.php" target="_blank"><i class="fas fa-database me-2"></i> Database Lokal</a>
+            <hr class="text-secondary">
+            <div id="statusKasirBadge" class="p-2 bg-danger rounded text-center small">Kasir Tutup</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10 p-4">
+            
+            <!-- SECTION 1: KASIR & MENU BUBUR -->
+            <div id="section-kasir" class="content-section">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Kasir & Layanan Bubur</h2>
+                    <div>
+                        <button class="btn btn-success btn-sm" onclick="bukaKasir()"><i class="fas fa-lock-open"></i> Buka Kasir</button>
+                        <button class="btn btn-danger btn-sm" onclick="tutupKasir()"><i class="fas fa-lock"></i> Tutup Kasir</button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Daftar Menu Bubur -->
+                    <div class="col-md-7">
+                        <h5>Pilih Menu Bubur</h5>
+                        <div class="row" id="menuList">
+                            <!-- Menu items injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Keranjang / Order -->
+                    <div class="col-md-5">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h5>Pesanan Saat Ini</h5>
+                                <div id="cartList" class="my-3" style="max-height: 200px; overflow-y: auto;">
+                                    <p class="text-muted">Belum ada pesanan.</p>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between mb-3">
+                                    <strong>Total:</strong>
+                                    <strong id="cartTotal">Rp 0</strong>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Nama Pelanggan:</label>
+                                    <input type="text" id="namaPelanggan" class="form-control form-control-sm" placeholder="Nama Pembeli">
+                                </div>
+                                <button class="btn btn-primary w-100" onclick="prosesOrder()"><i class="fas fa-paper-plane"></i> Proses Pesanan</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: STATUS ORDER -->
+            <div id="section-status" class="content-section" style="display: none;">
+                <h2>Status Order Pelanggan</h2>
+                <p class="text-muted">Pantau status pesanan bubur yang sedang diproses.</p>
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                               <thead>
+                                   <tr>
+                                       <th>ID Order</th>
+                                       <th>Pelanggan</th>
+                                       <th>Pesanan</th>
+                                       <th>Total</th>
+                                       <th>Status</th>
+                                       <th>Aksi</th>
+                                   </tr>
+                               </thead>
+                               <tbody id="orderTableBody">
+                                   <!-- Data loaded via JS -->
+                               </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: PEMBUKUAN SEDERHANA -->
+            <div id="section-buku" class="content-section" style="display: none;">
+                <h2>Pembukuan Sederhana</h2>
+                <p class="text-muted">Rekapitulasi keuangan harian dari transaksi penjualan.</p>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h6>Total Pemasukan</h6>
+                                <h3 id="bukuTotalPemasukan">Rp 0</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h6>Total Transaksi</h6>
+                                <h3 id="bukuTotalTransaksi">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card shadow-sm mt-3">
+                    <div class="card-body">
+                        <h5>Riwayat Transaksi</h5>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Waktu</th>
+                                    <th>Pelanggan</th>
+                                    <th>Detail</th>
+                                    <th>Jumlah</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bukuRiwayat"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Area Cetak Struk (Hidden Standard, Visible on Print) -->
+<div id="printArea" class="print-area p-3">
+    <div style="text-align: center;">
+        <h3>BUBUR AYAM EXPRESS</h3>
+        <p>Jl. Kuliner Nusantara No. 123</p>
+        <hr>
+    </div>
+    <div id="printContent"></div>
+    <hr>
+    <p style="text-align: center;">Terima Kasih Atas Kunjungan Anda!</p>
+</div>
+
+<!-- JavaScript Logic -->
+<script>
+    // Data Menu Bubur
+    const menuBubur = [
+        { id: 1, nama: "Bubur Ayam Spesial", harga: 15000, img: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=100" },
+        { id: 2, nama: "Bubur Ayam Telur Asin", harga: 18000, img: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=100" },
+        { id: 3, nama: "Bubur Ayam Cakue Jumbo", harga: 13000, img: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=100" },
+        { id: 4, nama: "Bubur Polos Kuah Kaldu", harga: 9000, img: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=100" }
+    ];
+
+    let cart = [];
+
+    // Inisialisasi LocalStorage jika kosong
+    if (!localStorage.getItem('db_orders')) localStorage.setItem('db_orders', JSON.stringify([]));
+    if (!localStorage.getItem('db_kasir')) localStorage.setItem('db_kasir', 'TUTUP');
+
+    function renderMenu() {
+        let html = '';
+        menuBubur.forEach(item => {
+            html += `
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title mb-1">${item.nama}</h6>
+                                <p class="text-primary mb-0">Rp ${item.harga.toLocaleString()}</p>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="tambahKeranjang(${item.id})">
+                                <i class="fas fa-plus"></i> Tambah
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        document.getElementById('menuList').innerHTML = html;
+    }
+
+    function tambahKeranjang(id) {
+        let status = localStorage.getItem('db_kasir');
+        if (status !== 'BUKA') {
+            alert('Kasir masih TUTUP! Harap Buka Kasir terlebih dahulu.');
+            return;
+        }
+        let item = menuBubur.find(m => m.id === id);
+        let exist = cart.find(c => c.id === id);
+        if (exist) {
+            exist.qty++;
+        } else {
+            cart.push({ ...item, qty: 1 });
+        }
+        renderCart();
+    }
+
+    function renderCart() {
+        let html = '';
+        let total = 0;
+        if (cart.length === 0) {
+            document.getElementById('cartList').innerHTML = '<p class="text-muted">Belum ada pesanan.</p>';
+            document.getElementById('cartTotal').innerText = 'Rp 0';
+            return;
+        }
+        cart.forEach((c, index) => {
+            let subtotal = c.harga * c.qty;
+            total += subtotal;
+            html += `
+                <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-1">
+                    <div>
+                        <small class="fw-bold">${c.nama}</small><br>
+                        <small class="text-muted">${c.qty} x Rp ${c.harga.toLocaleString()}</small>
+                    </div>
+                    <button class="btn btn-sm text-danger" onclick="hapusItemCart(${index})"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+        });
+        document.getElementById('cartList').innerHTML = html;
+        document.getElementById('cartTotal').innerText = 'Rp ' + total.toLocaleString();
+    }
+
+    function hapusItemCart(index) {
+        cart.splice(index, 1);
+        renderCart();
+    }
+
+    function bukaKasir() {
+        localStorage.setItem('db_kasir', 'BUKA');
+        updateStatusKasirBadge();
+        alert('Kasir Berhasil DIBUKA!');
+    }
+
+    function tutupKasir() {
+        localStorage.setItem('db_kasir', 'TUTUP');
+        updateStatusKasirBadge();
+        alert('Kasir Berhasil DITUTUP!');
+    }
+
+    function updateStatusKasirBadge() {
+        let status = localStorage.getItem('db_kasir');
+        let badge = document.getElementById('statusKasirBadge');
+        if (status === 'BUKA') {
+            badge.className = 'p-2 bg-success rounded text-center small text-white';
+            badge.innerText = 'Kasir BUKA';
+        } else {
+            badge.className = 'p-2 bg-danger rounded text-center small text-white';
+            badge.innerText = 'Kasir TUTUP';
+        }
+    }
+
+    function prosesOrder() {
+        if (cart.length === 0) { alert('Keranjang masih kosong!'); return; }
+        let nama = document.getElementById('namaPelanggan').value || 'Tamu';
+        let total = cart.reduce((sum, item) => sum + (item.harga * item.qty), 0);
+        
+        let orders = JSON.parse(localStorage.getItem('db_orders'));
+        let newOrder = {
+            id: 'ORD-' + Date.now().toString().slice(-4),
+            nama: nama,
+            items: [...cart],
+            total: total,
+            status: 'Dimasak'
+        };
+        
+        orders.push(newOrder);
+        localStorage.setItem('db_orders', JSON.stringify(orders));
+        
+        alert('Pesanan Berhasil Diproses!');
+        cart = [];
+        document.getElementById('namaPelanggan').value = '';
+        renderCart();
+        loadOrders();
+        loadPembukuan();
+    }
+
+    function loadOrders() {
+        let orders = JSON.parse(localStorage.getItem('db_orders'));
+        let html = '';
+        orders.forEach(o => {
+            let detailStr = o.items.map(i => `${i.nama} (${i.qty})`).join(', ');
+            html += `
+                <tr>
+                    <td>${o.id}</td>
+                    <td>${o.nama}</td>
+                    <td><small>${detailStr}</small></td>
+                    <td>Rp ${o.total.toLocaleString()}</td>
+                    <td><span class="badge bg-info">${o.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-success" onclick="ubahStatus('${o.id}', 'Selesai')">Selesai</button>
+                        <button class="btn btn-sm btn-secondary" onclick="printStruk('${o.id}')"><i class="fas fa-print"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+        document.getElementById('orderTableBody').innerHTML = html || '<tr><td colspan="6" class="text-center">Belum ada order.</td></tr>';
+    }
+
+    function ubahStatus(id, status) {
+        let orders = JSON.parse(localStorage.getItem('db_orders'));
+        let order = orders.find(o => o.id === id);
+        if(order) {
+            order.status = status;
+            localStorage.setItem('db_orders', JSON.stringify(orders));
+            loadOrders();
+        }
+    }
+
+    function loadPembukuan() {
+        let orders = JSON.parse(localStorage.getItem('db_orders'));
+        let totalPemasukan = 0;
+        let html = '';
+        orders.forEach(o => {
+            totalPemasukan += o.total;
+            let detailStr = o.items.map(i => `${i.qty}x ${i.nama}`).join(', ');
+            html += `
+                <tr>
+                    <td>Just Now</td>
+                    <td>${o.nama}</td>
+                    <td><small>${detailStr}</small></td>
+                    <td>Rp ${o.total.toLocaleString()}</td>
+                </tr>
+            `;
+        });
+        document.getElementById('bukuTotalPemasukan').innerText = 'Rp ' + totalPemasukan.toLocaleString();
+        document.getElementById('bukuTotalTransaksi').innerText = orders.length;
+        document.getElementById('bukuRiwayat').innerHTML = html || '<tr><td colspan="4" class="text-center">Belum ada transaksi.</td></tr>';
+    }
+
+    function printStruk(id) {
+        let orders = JSON.parse(localStorage.getItem('db_orders'));
+        let o = orders.find(ord => ord.id === id);
+        if(!o) return;
+        
+        let content = `<p>ID Order: ${o.id}<br>Pelanggan: ${o.nama}</p><hr><ul>`;
+        o.items.forEach(i => {
+            content += `<li>${i.nama} x${i.qty} - Rp ${(i.harga * i.qty).toLocaleString()}</li>`;
+        });
+        content += `</ul><hr><strong>Total: Rp ${o.total.toLocaleString()}</strong>`;
+        
+        document.getElementById('printContent').innerHTML = content;
+        window.print();
+    }
+
+    function showSection(sec) {
+        document.querySelectorAll('.content-section').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.sidebar a').forEach(el => el.classList.remove('active'));
+        document.getElementById('section-' + sec).style.display = 'block';
+        event.currentTarget.classList.add('active');
+        if(sec === 'status') loadOrders();
+        if(sec === 'buku') loadPembukuan();
+    }
+
+    // Jalankan saat load
+    window.onload = function() {
+        renderMenu();
+        updateStatusKasirBadge();
+        loadOrders();
+        loadPembukuan();
+    };
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
