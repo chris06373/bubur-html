@@ -294,29 +294,42 @@
     }
 
     function prosesOrder() {
-        if (cart.length === 0) { alert('Keranjang masih kosong!'); return; }
-        let nama = document.getElementById('namaPelanggan').value || 'Tamu';
-        let total = cart.reduce((sum, item) => sum + (item.harga * item.qty), 0);
-        
-        let orders = JSON.parse(localStorage.getItem('db_orders'));
-        let newOrder = {
-            id: 'ORD-' + Date.now().toString().slice(-4),
-            nama: nama,
-            items: [...cart],
-            total: total,
-            status: 'Dimasak'
-        };
-        
-        orders.push(newOrder);
-        localStorage.setItem('db_orders', JSON.stringify(orders));
-        
-        alert('Pesanan Berhasil Diproses!');
-        cart = [];
-        document.getElementById('namaPelanggan').value = '';
-        renderCart();
-        loadOrders();
-        loadPembukuan();
-    }
+    if (cart.length === 0) { alert('Keranjang masih kosong!'); return; }
+    let nama = document.getElementById('namaPelanggan').value || 'Tamu';
+    let total = cart.reduce((sum, item) => sum + (item.harga * item.qty), 0);
+    
+    // Ambil tanggal dan jam saat ini
+    let now = new Date();
+    let tanggalStr = now.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    let jamStr = now.toTimeString().split(' ')[0].substring(0, 5); // Format: HH:MM
+
+    let newOrder = {
+        id: 'ORD-' + Date.now().toString().slice(-4),
+        nama: nama,
+        items: [...cart],
+        total: total,
+        status: 'Dimasak',
+        tanggal: tanggalStr,
+        jam: jamStr
+    };
+    
+    // Simpan ke db_orders (untuk halaman status/kasir)
+    let orders = JSON.parse(localStorage.getItem('db_orders')) || [];
+    orders.push(newOrder);
+    localStorage.setItem('db_orders', JSON.stringify(orders));
+
+    // SIMPAN JUGA KE db_histori (untuk halaman histori.html)
+    let histori = JSON.parse(localStorage.getItem('db_histori')) || [];
+    histori.push(newOrder);
+    localStorage.setItem('db_histori', JSON.stringify(histori));
+    
+    alert('Pesanan Berhasil Diproses!');
+    cart = [];
+    document.getElementById('namaPelanggan').value = '';
+    renderCart();
+    loadOrders();
+    loadPembukuan();
+}
 
     function loadOrders() {
         let orders = JSON.parse(localStorage.getItem('db_orders'));
