@@ -1,1 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histori Transaksi - POS Bubur</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Library untuk export PDF & Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>body { background-color: #f8f9fa; }</style>
+</head>
+<body class="p-3 p-md-4">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Histori Arsip Transaksi</h2>
+            <a href="index.html" class="btn btn-secondary btn-sm">&larr; Kembali ke Kasir</a>
+        </div>
 
+        <!-- Filter & Search Panel -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small">Cari Data (ID / Nama / Menu):</label>
+                        <input type="text" id="inputSearch" class="form-control form-control-sm" placeholder="Ketik kata kunci..." onkeyup="filterData()">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Filter Tanggal:</label>
+                        <input type="date" id="filterTanggal" class="form-control form-control-sm" onchange="filterData()">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Filter Jam (HH:MM):</label>
+                        <input type="text" id="filterJam" class="form-control form-control-sm" placeholder="Contoh: 14:30" onkeyup="filterData()">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end gap-1">
+                        <button class="btn btn-outline-secondary btn-sm w-100" onclick="resetFilter()">Reset</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tombol Download & Navigasi First/Last -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <div class="btn-group">
+                <button class="btn btn-success btn-sm" onclick="downloadExcel()"><i class="fas fa-file-excel"></i> Unduh Excel</button>
+                <button class="btn btn-danger btn-sm" onclick="downloadPDF()"><i class="fas fa-file-pdf"></i> Unduh PDF</button>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-outline-primary btn-sm" onclick="goToFirst()"><i class="fas fa-angle-double-left"></i> First</button>
+                <button class="btn btn-outline-primary btn-sm" onclick="goToLast()"><i class="fas fa-angle-double-right"></i> Last</button>
+            </div>
+        </div>
+
+        <!-- Tabel Histori -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>No</th>
+                                <th>ID Order</th>
+                                <th>Tanggal & Jam</th>
+                                <th>Pelanggan</th>
+                                <th>Detail Pesanan</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historiTableBody"></tbody>
+                    </table>
+                </div>
+                <div id="paginationInfo" class="text-muted small mt-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let filteredData = [];
+
+        function getHistoriData() {
+            return JSON.parse(localStorage.getItem('db_histori')) || [];
+        }
+
+        function filterData() {
+            let allData = getHistoriData();
+            let keyword = document.getElementById('inputSearch').value.toLowerCase();
+            let tgl = document.getElementById('filterTanggal').value;
+            let jam = document.getElementById('filterJam').value.toLowerCase();
+
+            filteredData = allData.filter(o => {
+                let detailStr = o.items.map(i => i.nama).join(' ').toLowerCase();
+                let matchKeyword = o.id.toLowerCase().includes(keyword) || o.nama.toLowerCase().includes(keyword) || detailStr.includes(keyword);
+                let matchTgl = tgl ? (o.tanggal === tgl) : true;
+                let matchJam = jam ? (o.jam && o.jam.toLowerCase().includes(jam)) : true;
+                return matchKeyword && matchTgl && matchJam;
+            });
+            renderTable(filteredData);
+        }
+
+        function renderTable(data) {
+            let html = '';
+            data.forEach((o, index) => {
+                let detailStr = o.items.map(i => `${i.nama} (${i.qty}x)`).join(', ');
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><code>${o.id}</code></td>
+                        <td><small>${o.tanggal || '-'} <br>${o.jam || '-'}</small></td>
+                        <td>${o.nama}</td>
+                        <td><small>${detailStr}</small></td>
+                        <td>Rp ${o.total.toLocaleString()}</td>
+                        <td><span class="badge bg-secondary">${o.status}</span></td>
+                    </tr>
+                `;
+            });
+            document.getElementById('historiTableBody').innerHTML = html || '<tr><td colspan="7" class="text-center">Tidak ada data histori ditemukan.</td></tr>';
+            document.getElementById('paginationInfo').innerText = `Menampilkan ${data.length} dari total ${getHistoriData().length} data histori.`;
+        }
+
+        function resetFilter() {
+            document.getElementById('inputSearch').value = '';
+            document.getElementById('filterTanggal').value = '';
+            document.getElementById('filterJam').value = '';
+            filterData();
+        }
+
+        function goToFirst() {
+            if(filteredData.length > 0) alert('Menuju data terawal: ' + filteredData[0].id);
+        }
+
+        function goToLast() {
+            if(filteredData.length > 0) alert('Menuju data terakhir: ' + filteredData[filteredData.length - 1].id);
+        }
+
+        function downloadExcel() {
+            if(filteredData.length === 0) { alert('Tidak ada data untuk diunduh!'); return; }
+            let dataExport = filteredData.map((o, idx) => ({
+                No: idx + 1,
+                "ID Order": o.id,
+                Tanggal: o.tanggal,
+                Jam: o.jam,
+                Pelanggan: o.nama,
+                Pesanan: o.items.map(i => `${i.nama} (${i.qty}x)`).join(', '),
+                Total: o.total,
+                Status: o.status
+            }));
+            let ws = XLSX.utils.json_to_sheet(dataExport);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Histori Transaksi");
+            XLSX.writeFile(wb, "Histori_Transaksi_Bubur.xlsx");
+        }
+
+        function downloadPDF() {
+            if(filteredData.length === 0) { alert('Tidak ada data untuk diunduh!'); return; }
+            const { jsPDF } = window.jspdf;
+            let doc = new jsPDF();
+            doc.text("Laporan Histori Transaksi - Bubur Express", 14, 15);
+            
+            let bodyData = filteredData.map((o, idx) => [
+                idx + 1,
+                o.id,
+                `${o.tanggal || ''} ${o.jam || ''}`,
+                o.nama,
+                o.items.map(i => `${i.nama} (${i.qty}x)`).join(', '),
+                `Rp ${o.total.toLocaleString()}`
+            ]);
+
+            doc.autoTable({
+                startY: 20,
+                head: [['No', 'ID Order', 'Waktu', 'Pelanggan', 'Pesanan', 'Total']],
+                body: bodyData,
+            });
+            doc.save("Histori_Transaksi_Bubur.pdf");
+        }
+
+        window.onload = function() {
+            filterData();
+        };
+    </script>
+</body>
+</html>
